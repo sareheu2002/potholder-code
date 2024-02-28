@@ -1,0 +1,128 @@
+import numpy as np
+
+import random
+
+
+def get_digit(number, digit, base):
+    return number // base ** digit % base
+
+
+# square potholder
+height = 5
+dimension = height
+    
+# get braid generators
+
+generators = []
+# print("printing generators before assignment")
+# print(generators)
+# print("assigning generators")
+i = 0
+while i < height:
+    new_matrix = np.identity(height + 1)
+    new_matrix[i, i] = 2
+    new_matrix[i, i + 1] = 1
+    new_matrix[i + 1, i] = -1
+    new_matrix[i + 1, i + 1] = 0
+    i = i + 1
+    generators.append(new_matrix)
+
+#print("**********************printing the generators")
+#print(generators)
+
+# get the potholder_generators
+
+potholder_generators = []
+i = 0
+num_of_potholder_generators = 2 ** height
+while i < num_of_potholder_generators:
+    # print("**i=",i)
+    new_matrix = np.identity(height + 1)
+    place = 0
+    while place < dimension:
+        # print("***place=",place)
+        plus_or_minus = get_digit(i, place, 2)
+        multiply_by = generators[place]
+        if plus_or_minus == 1:
+            multiply_by = np.linalg.inv(multiply_by)
+        # print("***multiply_by=", multiply_by)
+        new_matrix = np.dot(new_matrix, multiply_by)
+        # print("***new_matrix = ", new_matrix)
+        place = place + 1
+    # print("**newmatrix=",new_matrix);
+    potholder_generators.append(new_matrix)
+    i = i + 1
+
+left_plat = np.zeros((round((dimension - 1) / 2), (dimension + 1)))
+right_plat = np.zeros(((dimension + 1), round((dimension - 1) / 2)))
+
+i = 0
+while i < (dimension - 1) / 2:
+    left_plat[i, 2 * i] = 1
+    left_plat[i, 2 * i + 1] = 1
+    right_plat[2 * i, i] = 1
+    right_plat[2 * i + 1, i] = -1
+    i = i + 1
+# print(left_plat," ",mat4)
+# print(right_plat," ",mat5)
+
+# reslist = [res1, res2, res3, res4, res5, res6, res7, res8]
+# print("printing reslist (old)")
+# print(reslist)
+
+# print("printling potholder_generators (new)")
+# print(potholder_generators)
+start_num_of_wiggles = 5
+end_num_of_wiggles = start_num_of_wiggles + 2
+goal = 10000000
+num_of_wiggles = start_num_of_wiggles
+while num_of_wiggles < end_num_of_wiggles:
+    number_of_crossings = (dimension) * num_of_wiggles
+    number_of_potholders = 2 ** (number_of_crossings)
+
+    length = 16
+    max_det = 0
+    counter = 0
+    how_many_with_det_1 = 0
+    while counter < goal:
+        # Build the matrix from the digits of counter
+        braid = np.identity(dimension + 1)
+        current_braid = random.randint(0, number_of_potholders)
+        digitcounter = 0
+        while digitcounter < num_of_wiggles:
+            current_digit = get_digit(current_braid, digitcounter, num_of_potholder_generators)
+            if digitcounter % 2 == 0:
+                braid = np.dot(potholder_generators[current_digit], braid)
+            if digitcounter % 2 == 1:
+                braid = np.dot(np.linalg.inv(potholder_generators[current_digit]), braid)
+            digitcounter = digitcounter + 1
+
+        # Multiply on the left and right
+        full_system = np.dot(left_platf, np.dot(braid, right_plat))
+
+        # delete a row and column
+        # deleted = np.delete(np.delete(full_system, 0, axis=0), 0, axis=1)
+        # compute determinant
+        det = np.absolute(round(np.linalg.det(full_system)))
+        # if det > max_det:
+        #    maxDet = det
+        # if det >= length:
+        #    length = det + length
+        #    orgdata = np.pad(orgdata, (0, det),
+        #                         'constant',
+        #                         constant_values=(0, 0))
+        # Add determinant to the orgdata
+        # orgdata[det] = orgdata[det] + 1
+        if det == 1:
+            how_many_with_det_1 = how_many_with_det_1 + 1
+
+        counter = counter + 1
+
+    # print(orgdata);
+
+    # for x in orgdata:
+    # print(x)
+
+    print("For height ", dimension, "potholders and num of wiggles = ", num_of_wiggles, ": ", how_many_with_det_1, "out of ",
+          goal, " have determinant = ", 1, " proportion = ", (how_many_with_det_1 / goal))
+    num_of_wiggles += 2
